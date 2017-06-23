@@ -3,15 +3,14 @@ var notifier = require('node-notifier');
 var request = require('request-promise');
 
 //URL parameters
-var CANYON_URL = "https://www.canyon.com/factory-outlet/ajax/articles.html?category=mtb&type=html";
-//var PROXY_URL = "http://emea-proxy.uk.oracle.com:80";
+var CANYON_URL = "https://www.canyon.com/en-gb/factory-outlet/ajax/articles.html?category=road&type=html";
 
 var TIMEOUT_INTERVAL = 3600 * 1000 // 1 hour;
 
 //Bike search params
-var SERIES = "Grand Canyon AL 29";
+var SERIES = "Ultimate CF SL";
 var SIZES = "S";
-var SEARCH_TEXT = "AL 3.9 WMN";
+var SEARCH_TEXT = "ULTIMATE CF SL DISC";
 
 function normalizeText(value) { return value.replace(/\s\s+/g, " ");}
 function parseAndSearchBikesFromFactoryOutlet(body) {
@@ -25,27 +24,35 @@ function parseAndSearchBikesFromFactoryOutlet(body) {
         var price = $el.find($('.price-retail')).text();
         result.push({
             'title': 'Hello, there is a new bike for you',
+            'product': normalizeText(text),
             'message':  normalizeText(text) + " - " + normalizeText(price)
         });
     });
     return result;
 }
 
-async function main() {  
+async function main() {
     console.log("Requesting " + CANYON_URL);
     var body = await request.get({'url':CANYON_URL});
     //var body = await request.get({'url':CANYON_URL,'proxy':PROXY_URL});
-    
-    var bikes = parseAndSearchBikesFromFactoryOutlet(body);
-    console.log(bikes.length === 0?"No bikes found.": bikes.length + " bikes found.")
-    if (bikes.length === 0) return 0;
 
-    // notify object
-    notifier.notify(bikes[0]);
+    var bikes = parseAndSearchBikesFromFactoryOutlet(body);
+
+    if (bikes.length === 0) {
+      console.log('No bikes found.');
+    } else {
+      // notify each bike found
+      for (var i = 0; i < bikes.length; i++) {
+        console.log('Found ' + bikes[i].product);
+        notifier.notify(bikes[i]);
+      }
+    }
+
     return 0;
 }
 
 //initial call
 main();
+
 //set to make repeated call
-setInterval(main,TIMEOUT_INTERVAL);
+setInterval(main, TIMEOUT_INTERVAL);
